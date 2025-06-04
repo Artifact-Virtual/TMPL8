@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artifact Virtual Chat</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+        }
+        .container {
+            height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #121212;
+        }
+        .header {
+            display: none; /* Hide the header completely */
+        }
+        .chat-container {
+            flex: 1;
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+        .model-selector {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Model Selector -->
+        <div class="model-selector">
+            <label for="model-select" style="color: white;">Select Model:</label>
+            <select id="model-select" onchange="switchModel()">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <!-- Chat Container -->
+        <iframe id="chat-app" class="chat-container" src="" frameborder="0" allow="microphone" title="Chat Model Interface"></iframe>
+    </div>
+
+    <script>
+        // Fetch available models from the backend universal adapter
+        async function fetchModels() {
+            try {
+                const response = await fetch('/api/models');
+                const models = await response.json();
+                const modelSelect = document.getElementById('model-select');
+                modelSelect.innerHTML = '';
+                models.forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.endpoint;
+                    option.textContent = model.display_name;
+                    modelSelect.appendChild(option);
+                });
+                // Set initial iframe src
+                if (models.length > 0) {
+                    document.getElementById('chat-app').src = models[0].endpoint;
+                }
+            } catch (e) {
+                // Fallback to static options if backend is unavailable
+                const modelSelect = document.getElementById('model-select');
+                [
+                    {endpoint: '/gradio/', display_name: 'Gradio'},
+                    {endpoint: '/openai/', display_name: 'OpenAI'},
+                    {endpoint: '/ollama/', display_name: 'Ollama'},
+                    {endpoint: '/llmstudio/', display_name: 'LLM Studio'}
+                ].forEach(model => {
+                    const option = document.createElement('option');
+                    option.value = model.endpoint;
+                    option.textContent = model.display_name;
+                    modelSelect.appendChild(option);
+                });
+                document.getElementById('chat-app').src = '/gradio/';
+            }
+        }
+
+        function switchModel() {
+            const modelSelect = document.getElementById('model-select');
+            const iframe = document.getElementById('chat-app');
+            iframe.src = modelSelect.value;
+        }
+
+        // Initialize on page load
+        window.onload = fetchModels;
+    </script>
+</body>
+</html>
